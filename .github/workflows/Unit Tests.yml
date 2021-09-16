@@ -63,4 +63,5 @@ jobs:
           name: Test Harness          # Name of the check run which will be created
           path: Tests/-*.xml          # Path to test results
           reporter: dotnet-trx        # Format of test results
+          # Comment to force trigger
 
