@@ -8,7 +8,7 @@ jobs:
     runs-on: windows-latest
 
     # Only when run from the main repo
-    if: github.repository == 'microsoft/Microsoft365DSC'
+    if: github.repository == 'mpiederiet/Microsoft365DSC'
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -44,7 +44,7 @@ jobs:
           $MaximumFunctionCount = 9999
           try
           {
-              $results = Invoke-TestHarness -IgnoreCodeCoverage
+              $results = Invoke-TestHarness -IgnoreCodeCoverage -TestResultsFile './Tests/TestOutput.xml'
           }
           catch
           {
@@ -56,3 +56,11 @@ jobs:
           {
               throw "{$($results.FailedCount)} Unit Test(s) Failed"
           }
+      - name: Test Reporter
+        uses: dorny/test-reporter@v1.5.0
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Test Harness          # Name of the check run which will be created
+          path: Tests/-*.xml          # Path to test results
+          reporter: dotnet-trx        # Format of test results
+
