@@ -37,8 +37,9 @@ function Invoke-TestHarness
     Import-Module -Name "$repoDir\modules\Microsoft365DSC\Microsoft365DSC.psd1"
     #$testsToRun = @()
 
+    # $versionsPath = Join-Path -Path $repoDir -ChildPath "\Tests\Unit\Stubs\"
+
     # Run Unit Tests
-    $versionsPath = Join-Path -Path $repoDir -ChildPath "\Tests\Unit\Stubs\"
     # Import the first stub found so that there is a base module loaded before the tests start
     $firstStub = Join-Path -Path $repoDir `
         -ChildPath "\Tests\Unit\Stubs\Microsoft365.psm1"
@@ -84,7 +85,7 @@ function Invoke-TestHarness
     if ([String]::IsNullOrEmpty($TestResultsFile) -eq $false) {
         # Enable NUnit output
         $PesterConfig.TestResult.Enabled=$True
-        $PesterConfig.TestResult.OutputFormat='NUnitXml'
+        $PesterConfig.TestResult.OutputFormat='JUnitXml'
         $PesterConfig.TestResult.OutputPath=$TestResultsFile
     }
 
