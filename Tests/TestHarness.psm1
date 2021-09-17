@@ -21,6 +21,7 @@ function Invoke-TestHarness
 
     $repoDir = Join-Path -Path $PSScriptRoot -ChildPath '..\' -Resolve
 
+    <#
     $testCoverageFiles = @()
     if ($IgnoreCodeCoverage.IsPresent -eq $false)
     {
@@ -31,15 +32,10 @@ function Invoke-TestHarness
             }
         }
     }
+    #>
 
-    $testResultSettings = @{ }
-    if ([String]::IsNullOrEmpty($TestResultsFile) -eq $false)
-    {
-        $testResultSettings.Add('OutputFormat', 'NUnitXml' )
-        $testResultSettings.Add('OutputFile', $TestResultsFile)
-    }
     Import-Module -Name "$repoDir\modules\Microsoft365DSC\Microsoft365DSC.psd1"
-    $testsToRun = @()
+    #$testsToRun = @()
 
     # Run Unit Tests
     $versionsPath = Join-Path -Path $repoDir -ChildPath "\Tests\Unit\Stubs\"
@@ -72,20 +68,40 @@ function Invoke-TestHarness
         $_.FullName -notmatch 'DSCResource.Tests\\Tests'
     }
 
-    $testsToRun += @( $commonTestFiles.FullName )
+    #$testsToRun += @( $commonTestFiles.FullName )
 
-    $filesToExecute = @()
-    foreach ($testToRun in $testsToRun)
+    $filesToExecute = @($commonTestFiles.FullName)
+    <#foreach ($testToRun in $testsToRun)
     {
         $filesToExecute += $testToRun
+    }#>
+
+    # Build Pester configuration
+    $PesterConfig = New-PesterConfiguration
+    $PesterConfig.Run.PassThru = $True
+    $PesterConfig.Run.Path = $filesToExecute
+
+    if ([String]::IsNullOrEmpty($TestResultsFile) -eq $false) {
+        # Enable NUnit output
+        $PesterConfig.TestResult.Enabled=$True
+        $PesterConfig.TestResult.OutputFormat='NUnitXml'
+        $PesterConfig.TestResult.OutputPath=$TestResultsFile
     }
-    if ($IgnoreCodeCoverage.IsPresent -eq $false)
-    {
-        $results = Invoke-Pester -Path $filesToExecute -CodeCoverage $testCoverageFiles -CodeCoverageOutputFile  "CodeCov.xml" -PassThru @testResultSettings
+
+    if ($IgnoreCodeCoverage.IsPresent -eq $false) {
+        # Files/Folders to use for Code Coverage
+        $CodeCoveragePaths=(Get-childitem "$repoDir\modules\Microsoft365DSC" -Exclude 'Examples','Dependencies','Modules'|Select-Object -ExpandProperty FullName)
+
+        # Enable CodeCoverage output
+        $PesterConfig.CodeCoverage.Enabled=$True
+        $PesterConfig.CodeCoverage.Path=$CodeCoveragePaths
+        # Code Coverage without breakpoints, should be faster (a lot)
+        # https://github.com/pester/Pester/releases/tag/5.3.0
+        $PesterConfig.CodeCoverage.UseBreakpoints=$False
+        $PesterConfig.CodeCoverage.OutputPath='CodeCov.xml'
     }
-    else
-    {
-        $results = Invoke-Pester -Path $filesToExecute -PassThru @testResultSettings
-    }
+
+    $Results=Invoke-Pester -Configuration $PesterConfig
+
     return $results
 }
