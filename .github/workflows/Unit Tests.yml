@@ -65,4 +65,4 @@ jobs:
         with:
           name: Test Harness          # Name of the check run which will be created
           path: TestOutput.xml  # Path to test results
-          reporter: jest-Junit        # Format of test results
+          reporter: jest-junit        # Format of test results
